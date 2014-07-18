@@ -6,6 +6,10 @@ let co = require("co");
 let timestamp = require("mongoose-timestamp");
 
 module.exports = function*(plugin, options){
+  if(options.connectionString){
+    db.connect(options.connectionString);
+  }
+
   let userCache = plugin.cache({segment: "!!userCache", expiresIn: 300000});
   let dropUserFromCache = function(user){
     userCache.drop(user.id);
