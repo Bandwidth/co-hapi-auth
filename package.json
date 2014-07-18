@@ -12,7 +12,9 @@
     "co",
     "module"
   ],
-  "author": "avbel",
+  "author": {
+    "name": "avbel"
+  },
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.0",
@@ -20,6 +22,12 @@
     "co": "*",
     "hapi-auth-cookie": "^1.2",
     "mongoose": "^3.8.13",
+    "mongoose-q": "^0.0.10",
     "mongoose-timestamp": "^0.2.1"
-  }
+  },
+  "readme": "auth\n===========\n\nThis is hapi plugins which adds authorization support to the app. User info is stored in collection \"users\". You can use extrenal providers (via `bell`) or local authetntification if need.\n\n## Dependencies\nModule `co-hapi` and plugin `models` are required to use this plugin.\nNode 0.11+ should be used with --harmony switch.\n",
+  "readmeFilename": "README.md",
+  "_id": "co-hapi-auth@0.0.1",
+  "_shasum": "f3c125d8bd3d84a23a74b831a1aeab05712930ac",
+  "_from": "co-hapi-auth@*"
 }

@@ -1,5 +1,6 @@
 "use strict";
 let db = require("mongoose");
+require("mongoose-q")(db);
 let bcrypt = require("bcryptjs");
 let co = require("co");
 let timestamp = require("mongoose-timestamp");
@@ -46,7 +47,7 @@ module.exports = function*(plugin, options){
 
   userSchema.statics.getById = function*(id){
     let user = yield userCache.getOrGenerate.bind(userCache, id.toString(), function(callback){co(function*(){
-      let model = plugin.plugins.models.models.user;
+      let model = plugin.plugins["co-hapi-models"].models.user;
       let usr = yield model.findById(id).populate("roles").execQ();
       if(usr == null) return usr;
       usr.roles = (usr.roles || []).map(function(r){
@@ -72,7 +73,7 @@ module.exports = function*(plugin, options){
   };
 
   userSchema.statics.getOrCreate = function*(user){
-    let model = plugin.plugins.models.models.user;
+    let model = plugin.plugins["co-hapi-models"].models.user;
     let u = yield model.findOne({userName: user.userName}).execQ();
     if(u){
       return u;
@@ -96,7 +97,7 @@ module.exports = function*(plugin, options){
     name: {type: String, unique: true, required: true}
   });
   roleSchema.plugin(timestamp);
-  plugin.dependency("models", function*(plugin){
+  plugin.dependency("co-hapi-models", function*(plugin){
     yield plugin.methods.models.register({
       user: db.model("users", userSchema),
       userRole: db.model("userRoles", roleSchema)
