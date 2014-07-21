@@ -1,21 +1,30 @@
 "use strict";
+let Joi = require("joi");
+
+let optionsSchema = Joi.object({
+  providers: Joi.object(),
+  password: Joi.string(),
+  session: Joi.object()
+});
+
 
 // entry point
-module.exports.register = function*(plugin, settings){
-  settings = settings || {};
+module.exports.register = function*(plugin, options){
+  options = options || {};
+  Joi.assert(options, optionsSchema);
 
   let defineUserModels = require("./userModels");
-  yield defineUserModels(plugin, settings);
+  yield defineUserModels(plugin, options);
   yield plugin.register([require("bell"), require("hapi-auth-cookie")]);
 
-  settings.providers = settings.providers || {};
-  for(let name in settings.providers){
-    let provider = settings.providers[name];
+  options.providers = options.providers || {};
+  for(let name in options.providers){
+    let provider = options.providers[name];
     if(!provider.provider) {
       provider.provider = name;
     }
     if(!provider.password){
-      provider.password = settings.password || "i2mdsMsp(^s";
+      provider.password = options.password || "i2mdsMsp(^s";
     }
     plugin.auth.strategy(name, "bell", provider);
     plugin.route({
@@ -40,19 +49,19 @@ module.exports.register = function*(plugin, settings){
       }
     });
   }
-  let sessionSettings = settings.session || {};
-  if(!sessionSettings.password){
-    sessionSettings.password = "dkl,_nDQ7lSX";
+  let sessionoptions = options.session || {};
+  if(!sessionoptions.password){
+    sessionoptions.password = "dkl,_nDQ7lSX";
   }
-  if(!sessionSettings.cookie){
-    sessionSettings.cookie = "sid";
+  if(!sessionoptions.cookie){
+    sessionoptions.cookie = "sid";
   }
-  if(!sessionSettings.redirectTo){
-    sessionSettings.redirectTo = "/auth/signIn";
+  if(!sessionoptions.redirectTo){
+    sessionoptions.redirectTo = "/auth/signIn";
   }
-  sessionSettings.isSecure = false;
+  sessionoptions.isSecure = false;
 
-  plugin.auth.strategy("session", "cookie", sessionSettings);
+  plugin.auth.strategy("session", "cookie", sessionoptions);
 
   plugin.ext("onPostAuth", function*(request){
     if(request.auth.isAuthenticated && request.auth.credentials.userId){

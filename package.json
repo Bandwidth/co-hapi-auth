@@ -21,6 +21,7 @@
     "bell": "^1.0",
     "co": "*",
     "hapi-auth-cookie": "^1.2",
+    "joi": "^4.6.1",
     "mongoose-timestamp": "^0.2.1"
   },
   "devDependencies": {
