@@ -1,9 +1,10 @@
 "use strict";
-let defineUserModels = require("./userModels");
 
 // entry point
 module.exports.register = function*(plugin, settings){
   settings = settings || {};
+
+  let defineUserModels = require("./userModels");
   yield defineUserModels(plugin, settings);
   yield plugin.register([require("bell"), require("hapi-auth-cookie")]);
 

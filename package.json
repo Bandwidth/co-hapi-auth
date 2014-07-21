@@ -4,7 +4,7 @@
   "description": "This is hapi plugins which adds authorization support",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test ./node_modules/.bin/mocha --harmony"
   },
   "keywords": [
     "hapi",
@@ -21,9 +21,22 @@
     "bell": "^1.0",
     "co": "*",
     "hapi-auth-cookie": "^1.2",
-    "mongoose": "^3.8.13",
-    "mongoose-q": "^0.0.10",
     "mongoose-timestamp": "^0.2.1"
+  },
+  "devDependencies": {
+    "co": "^3.0.6",
+    "co-hapi": "0.0.8",
+    "co-hapi-models": "0.0.2",
+    "co-hapi-mongoose": "0.0.1",
+    "co-mocha": "0.0.4",
+    "co-supertest": "0.0.7",
+    "hapi": "^6.2.0",
+    "jade": "^1.4.2",
+    "mocha": "^1.20.1",
+    "mongoose": "^3.8.13",
+    "should": "^4.0.4",
+    "sinon": "^1.10.3",
+    "supertest": "^0.13.0"
   },
   "readme": "auth\n===========\n\nThis is hapi plugins which adds authorization support to the app. User info is stored in collection \"users\". You can use extrenal providers (via `bell`) or local authetntification if need.\n\n## Dependencies\nModule `co-hapi` and plugin `models` are required to use this plugin.\nNode 0.11+ should be used with --harmony switch.\n",
   "readmeFilename": "README.md",

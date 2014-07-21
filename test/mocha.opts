@@ -1,0 +1,6 @@
+ --require should
+ --require co-mocha
+ --require co-hapi
+ --reporter spec
+ --recursive
+
