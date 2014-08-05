@@ -27,8 +27,8 @@
   "devDependencies": {
     "co": "^3.0.6",
     "co-hapi": "0.0.8",
-    "co-hapi-models": "0.0.2",
-    "co-hapi-mongoose": "0.0.1",
+    "co-hapi-models": "0.0.3",
+    "co-hapi-mongoose": "0.0.4",
     "co-mocha": "0.0.4",
     "co-supertest": "0.0.7",
     "hapi": "^6.2.0",

@@ -1,6 +1,9 @@
 auth
 ===========
 
+[![Build](https://travis-ci.org/avbel/auth.png)](https://travis-ci.org/avbel/auth)
+[![Dependencies](https://david-dm.org/avbel/auth.png)](https://david-dm.org/avbel/auth)
+
 This is hapi plugins which adds authorization support to the app. User info is stored in collection "users". You can use extrenal providers (via `bell`) or local authetntification if need.
 
 ## Dependencies
