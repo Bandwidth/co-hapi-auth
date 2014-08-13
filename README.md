@@ -1,4 +1,4 @@
-auth
+co-hapi-auth
 ===========
 
 [![Build](https://travis-ci.org/avbel/auth.png)](https://travis-ci.org/avbel/auth)
