@@ -15,6 +15,10 @@
   "author": {
     "name": "avbel"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bandwidthcom/co-hapi-auth.git"
+  },
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.0",
