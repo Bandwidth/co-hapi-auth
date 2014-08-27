@@ -4,7 +4,8 @@ let Joi = require("joi");
 let optionsSchema = Joi.object({
   providers: Joi.object(),
   password: Joi.string(),
-  session: Joi.object()
+  session: Joi.object(),
+  minPasswordLength: Joi.number().integer().min(6)
 });
 
 
@@ -12,7 +13,9 @@ let optionsSchema = Joi.object({
 module.exports.register = function*(plugin, options){
   options = options || {};
   Joi.assert(options, optionsSchema);
-
+  if(!options.minPasswordLength){
+    options.minPasswordLength = 6;
+  }
   let defineUserModels = require("./userModels");
   yield defineUserModels(plugin, options);
   yield plugin.register([require("bell"), require("hapi-auth-cookie")]);
@@ -91,6 +94,43 @@ module.exports.register = function*(plugin, options){
         reply.view("signIn");
       },
       auth: {mode: "try", strategy: "session"},
+      plugins: {
+        "hapi-auth-cookie": {
+          redirectTo: false
+        }
+      }
+    }
+  },{
+    method: ["POST"],
+    path: "/auth/signIn",
+    config: {
+      handler: function* (request) {
+        if (request.auth.isAuthenticated){
+          return reply.redirect("/");
+        }
+        let user = yield request.models.user.findOne({
+          "$or":[
+            {userName: request.payload.userName},
+            {email: request.payload.email}
+          ],
+          enabled: true
+        }).execQ();
+        if(!user){
+          return reply.view("signIn", {user: request.payload, error: "Missing user with such user name or email"});
+        }
+        if(!(yield user.comparePassword(request.payload.password))){
+          return reply.view("signIn", {user: request.payload, error: "Invalid password"});
+        }
+        request.auth.session.set({userId: user.id});
+        return reply.redirect("/");
+      },
+      auth: {mode: "try", strategy: "session"},
+      validate: {
+        payload: Joi.object().keys({
+          userNameOrEmail: Joi.string().required(),
+          password: Joi.string().min(options.minPasswordLength).required()
+        })
+      },
       plugins: {
         "hapi-auth-cookie": {
           redirectTo: false

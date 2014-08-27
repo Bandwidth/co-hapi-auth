@@ -19,7 +19,7 @@ module.exports = function*(plugin, options){
       lastName: String,
       externalProvider: db.Schema.Types.Mixed,
       confirmedDate: Date,
-      enabled: {type: Boolean, default: false},
+      enabled: {type: Boolean, default: false, index: true},
       resetPasswordToken: {type: String, index: true},
       confirmationToken: {type: String, index: true},
       resetPasswordTokenCreatedDate: Date,

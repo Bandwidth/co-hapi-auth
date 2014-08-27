@@ -58,7 +58,7 @@ describe("auth", function(){
     yield supertest(server.listener).get("/auth/external/google").expect(302).end();
     yield supertest(server.listener).post("/auth/external/google").expect(302).end();
   });
-  it("should create route /auth/signIn", function*(){
+  it.only("should create route /auth/signIn", function*(){
     yield supertest(server.listener).get("/auth/signIn").expect(200).end();
   });
   it("should create route /auth/signOut", function*(){
