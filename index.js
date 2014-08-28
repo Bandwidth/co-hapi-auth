@@ -1,24 +1,23 @@
 "use strict";
 let Joi = require("joi");
+let requestHandler = require("./requestHandler");
 
 let optionsSchema = Joi.object({
   providers: Joi.object(),
   password: Joi.string(),
   session: Joi.object(),
-  minPasswordLength: Joi.number().integer().min(6),
-  rememberTTL: Joi.number().min(0)
+  minPasswordLength: Joi.number().integer().min(6).default(6),
+  rememberTTL: Joi.number().min(0),
+  enableSignUp: Joi.boolean()
 });
 
 
 // entry point
 module.exports.register = function*(plugin, options){
   options = options || {};
-  Joi.assert(options, optionsSchema);
-  if(!options.minPasswordLength){
-    options.minPasswordLength = 6;
-  }
-  let defineUserModels = require("./userModels");
-  yield defineUserModels(plugin, options);
+  options = yield Joi.validate.bind(Joi, options, optionsSchema);
+  yield require("./userModels")(plugin, options);
+  yield require("./random")(plugin, options);
   yield plugin.register([require("bell"), require("hapi-auth-cookie")]);
 
   options.providers = options.providers || {};
@@ -80,7 +79,7 @@ module.exports.register = function*(plugin, options){
       auth: "session",
       handler: function (request, reply) {
         request.auth.session.clear();
-        return reply.redirect("/auth/signIn");
+        return reply.redirect("/auth/signIn?next=/");
       }
     }
   },{
@@ -107,45 +106,49 @@ module.exports.register = function*(plugin, options){
     path: "/auth/signIn",
     config: {
       handler: function* (request, reply) {
-        if (request.auth.isAuthenticated){
-          return reply.redirect("/");
-        }
-        let user = yield request.models.user.findOne({
-          "$or":[
-            {userName: request.payload.userNameOrEmail},
-            {email: request.payload.userNameOrEmail}
-          ],
-          enabled: true,
-          confirmedDate:{"$exists": true}
-        }).execQ();
-        if(!user){
-          return reply.view("signIn", {user: request.payload, error: "Missing user with such user name or email"});
-        }
-        if(!(yield user.comparePassword(request.payload.password))){
-          return reply.view("signIn", {user: request.payload, error: "Invalid password"});
-        }
-        request.auth.session.set({userId: user.id});
-        if(request.payload.remember){
-          for(let k in request._states){
-            let state = request._states[k];
-            if(state.value && state.value.userId == user.id){
-              if((state.options || {}).ttl == null){
-                state.options = state.options || {};
-                state.options.ttl = (options.rememberTTL || 24*30)  * 3600000;
+        return requestHandler(request, reply, function(request, reply){
+          if (request.auth.isAuthenticated){
+            return reply.redirect("/");
+          }
+          let user = yield request.models.user.findOne({
+            "$or":[
+              {userName: request.payload.userNameOrEmail},
+              {email: request.payload.userNameOrEmail}
+            ],
+            enabled: true,
+            confirmedDate:{"$exists": true}
+          }).execQ();
+          if(!user){
+            throw new Error("Missing user with such name or email");
+          }
+          if(!(yield user.comparePassword(request.payload.password))){
+            throw new Error("Invalid user");
+          }
+          request.auth.session.set({userId: user.id});
+          if(request.payload.remember){
+            for(let k in request._states){
+              let state = request._states[k];
+              if(state.value && state.value.userId == user.id){
+                if((state.options || {}).ttl == null){
+                  state.options = state.options || {};
+                  state.options.ttl = (options.rememberTTL || 24*30)  * 3600000;
+                }
               }
             }
           }
-        }
-        return reply.redirect(request.getReturnUrl());
+          return reply.redirect(request.getReturnUrl());
+        }, function(err, request, reply){
+          reply.view("signIn", {user: request.payload, error: err.message});
+        },{
+          payload: Joi.object().keys({
+            userNameOrEmail: Joi.string().required(),
+            password: Joi.string().required(),
+            remember: Joi.any()
+          })
+        });
       },
       auth: {mode: "try", strategy: "session"},
-      validate: {
-        payload: Joi.object().keys({
-          userNameOrEmail: Joi.string().required(),
-          password: Joi.string().required(),
-          remember: Joi.any()
-        })
-      },
+      validate: ,
       plugins: {
         "hapi-auth-cookie": {
           redirectTo: false
@@ -153,6 +156,88 @@ module.exports.register = function*(plugin, options){
       }
     }
   }]);
+  if(options.enableSignUp !== false){
+    plugin.route([{
+      method: ["GET"],
+      path: "/auth/signUp",
+      config: {
+        handler: function (request, reply) {
+          if (request.auth.isAuthenticated){
+            return reply.redirect("/");
+          }
+          request.setReturnUrl();
+          reply.view("signUp", {user: {}});
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    },{
+      method: ["POST"],
+      path: "/auth/signUp",
+      config: {
+        handler: function* (request, reply) {
+          return requestHandler(request, reply, function(request, reply){
+            if (request.auth.isAuthenticated){
+              return reply.redirect("/");
+            }
+            let user = yield request.models.user.findOne({
+              "$or":[
+                {userName: request.payload.userNameOrEmail},
+                {email: request.payload.userNameOrEmail}
+              ]
+            }, {_id: 1}).execQ();
+            if(user){
+              throw new Error("User with such name or email is registered already");
+            }
+            user = new request.models.user({
+              userName: request.payload.userName,
+              email: request.payload.email,
+              firstName: request.payload.firstName,
+              lastName: request.payload.lastName,
+              confirmationToken: yield plugin.methods.random.uid(),
+              confirmationTokenCreatedDate: new Date()
+            });
+            yield user.setPassword(request.payload.password);
+            for(let k in request.payload.additionalFields){
+              user.set(k, request.payload.additionalFields[k]);
+            }
+            yield plugin.plugins.posto.sendEmail("confirmEmail", {
+              userName: user.userName,
+              confirmationToken: user.confirmationToken,
+              appName: this.services.config.app.name
+            }, {
+              to: user.email,
+              subject: this.services.config.app.name + " - confirmation of email"
+            });
+            yield user.saveQ();
+            reply.view("signUp", {data: {}, info: "Registration has been completed. Please check your email and confirm it now."});
+          }, function(err, request, reply){
+            reply.view("signUp", {data: request.payload, error: err.message});
+          }, {
+            payload: Joi.object().keys({
+              userName: Joi.string().required(),
+              email: Joi.string().required(),
+              password: Joi.string().min(options.minPasswordLength).required(),
+              repeatPassword: Joi.ref("password"),
+              firstName: Joi.string(),
+              lastName: Joi.string(),
+              additionalFields: Joi.object().default({})
+            })
+          });
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    }]);
+  }
 };
 
 module.exports.register.attributes = {

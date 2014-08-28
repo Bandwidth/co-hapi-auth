@@ -129,12 +129,12 @@ describe("auth", function(){
       context.error.should.be.ok;
     });
 
-    it("should show signIn page with error when user name is invalid", function*(){
+    it.only("should show signIn page with error when user name is invalid", function*(){
       let context;
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield supertest(server.listener).post("/auth/signIn").send({userNameOrEmail: "user111", password: "123456"}).expect(200).end();
+      yield supertest(server.listener).post("/auth/signIn").send({userNameOrEmail: "user111", password1: "123456"}).expect(200).end();
       context.error.should.be.ok;
     });
 
