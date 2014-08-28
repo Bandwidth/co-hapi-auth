@@ -33,7 +33,7 @@ describe("auth", function(){
       method: "GET",
       path: "/testLogin",
       handler: function*(request, reply){
-        reply.state("sid", {userId: 1});
+        request.auth.session.set({userId: 1});
         return "test";
       }
 
@@ -58,17 +58,18 @@ describe("auth", function(){
     yield supertest(server.listener).get("/auth/external/google").expect(302).end();
     yield supertest(server.listener).post("/auth/external/google").expect(302).end();
   });
-  it.only("should create route /auth/signIn", function*(){
+  it("should create route /auth/signIn", function*(){
     yield supertest(server.listener).get("/auth/signIn").expect(200).end();
   });
   it("should create route /auth/signOut", function*(){
     yield supertest(server.listener).get("/auth/signOut").expect(302).end();
   });
 
-  it("should load user data from session cookie's id", function*(){
+  it.only("should load user data from session cookie's id", function*(){
     let agent = supertest.agent(server.listener)
     yield agent.get("/test").expect(302).end();
-    yield agent.get("/testLogin").expect(200).end();
+    debugger;
+    let r = yield agent.get("/testLogin").expect(200).end();
     yield agent.get("/test").expect(200).expect("test").end();
   });
 });
