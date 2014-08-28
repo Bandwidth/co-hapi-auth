@@ -19,6 +19,7 @@ describe("returnBack", function(){
       method: "GET",
       path: "/test2",
       handler: function*(request){
+        request.setReturnUrl();
         request._states.returnBack.value.should.equal("/path1");
         return "test2";
       }
@@ -27,6 +28,7 @@ describe("returnBack", function(){
       method: "GET",
       path: "/test3",
       handler: function*(request){
+        request.setReturnUrl();
         request.setReturnUrl("/path2");
         request._states.returnBack.value.should.equal("/path1");
         return "test3";
@@ -96,7 +98,7 @@ describe("returnBack", function(){
     it("should store query field 'next'", function*(){
       yield supertest(server.listener).get("/test2").query({next: "/path1"}).expect(200).end();
     });
-    it("should make field 'next' higher priority than calling setReturnUrl() from handler", function*(){
+    it("should store return url only one per request", function*(){
       yield supertest(server.listener).get("/test3").query({next: "/path1"}).expect(200).end();
     });
     it("should store url with setReturnUrl()", function*(){

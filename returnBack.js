@@ -9,14 +9,13 @@ let optionsSchema = Joi.object({
 });
 
 module.exports.register = function*(plugin, options){
-  debugger;
   options = options || {};
   options = yield Joi.validate.bind(Joi, options, optionsSchema);
   plugin.state(options.cookie, {isHttpOnly: true, path: "/", encoding: "iron", password: options.password })
   plugin.ext("onPreAuth", function*(request){
     request.setReturnUrl = function(url){
       if(request._returnUrlSaved) return;
-      url = url || request.info.referrer || "/";
+      url = url || (request.query || {})[options.queryField] || request.info.referrer || "/";
       url = urllib.parse(url).path; //take only relative part
       request._setState(options.cookie, url);
       request._returnUrlSaved = true;
@@ -31,9 +30,7 @@ module.exports.register = function*(plugin, options){
       }
       return url;
     }
-    if(request.method === "get" && request.query[options.queryField]){
-      request.setReturnUrl(request.query[options.queryField]);
-    }
+
   });
 };
 
