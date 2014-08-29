@@ -105,10 +105,34 @@ describe("auth", function(){
     yield agent.get("/test").expect(200).expect("test").end();
   });
 
+  describe("GET /auth/signIn", function(){
+    it("should show login page", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).get("/auth/signIn").expect(200).end();
+      (!context.error).should.be.true;
+    });
+
+    it("should redirect to / for authorized user", function*(){
+      if(stub)stub.restore();
+      stub = null;
+      let User = yield server.methods.models.get("user");
+      yield User.find({userName: "user"}).remove().execQ();
+      let user = new User({userName: "user", email: "user@test.com", enabled: true, confirmedDate: new Date()});
+      yield user.setPassword("123456");
+      yield user.saveQ();
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      yield agent.get("/auth/signIn").expect(302).end();
+    });
+  });
+
   describe("POST /auth/signIn", function(){
     let user;
     before(function*(){
-      stub.restore();
+      if(stub)stub.restore();
       stub = null;
       let User = yield server.methods.models.get("user");
       yield User.find({userName: "user"}).remove().execQ();
@@ -158,6 +182,30 @@ describe("auth", function(){
       (cookie.indexOf("Max-Age=") >= 0).should.be.true;
       (cookie.indexOf("Expires=") >= 0).should.be.true;
       yield agent.get("/checkAuth").expect(200).end();
+    });
+  });
+
+  describe("GET /auth/signUp", function(){
+    it("should show signup page", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).get("/auth/signUp").expect(200).end();
+      (!context.error).should.be.true;
+    });
+
+    it("should redirect to / for authorized user", function*(){
+      if(stub)stub.restore();
+      stub = null;
+      let User = yield server.methods.models.get("user");
+      yield User.find({userName: "user"}).remove().execQ();
+      let user = new User({userName: "user", email: "user@test.com", enabled: true, confirmedDate: new Date()});
+      yield user.setPassword("123456");
+      yield user.saveQ();
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      yield agent.get("/auth/signUp").expect(302).end();
     });
   });
   describe("POST /auth/signUp", function(){
