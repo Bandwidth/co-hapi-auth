@@ -27,7 +27,7 @@ describe("auth", function(){
         google: {clientId: "clientId", clientSecret: "clientSecret"}
       }
 
-    }}, require("../returnBack"), require("../appInfo"), {
+    }}, require("return-back"), require("app-info"), {
       plugin: require("posto"),
       options: {
         transport: function(){

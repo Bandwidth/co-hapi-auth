@@ -29,10 +29,11 @@
     "mongoose-timestamp": "^0.2.1"
   },
   "devDependencies": {
+    "app-info": "0.0.1",
     "co": "^3.0.6",
     "co-hapi": "0.0.8",
-    "co-hapi-models": "0.0.3",
-    "co-hapi-mongoose": "0.0.4",
+    "co-hapi-models": "0.0.4",
+    "co-hapi-mongoose": "0.0.5",
     "co-mocha": "0.0.4",
     "co-supertest": "0.0.7",
     "hapi": "^6.2.0",
@@ -40,6 +41,7 @@
     "mocha": "^1.20.1",
     "mongoose": "^3.8.13",
     "posto": "0.0.2",
+    "return-back": "0.0.2",
     "should": "^4.0.4",
     "sinon": "^1.10.3",
     "supertest": "^0.13.0",
