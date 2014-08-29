@@ -3,6 +3,16 @@ let Hapi = require("co-hapi");
 let sinon = require("sinon");
 let supertest = require("co-supertest");
 let Mongoose = require("mongoose").constructor;
+
+let transport = {
+  name: "fake",
+  version: "0.0",
+  send: function(opts, callback){
+    callback();
+  }
+};
+
+
 describe("auth", function(){
   let server, stub;
   before(function*(){
@@ -17,7 +27,18 @@ describe("auth", function(){
         google: {clientId: "clientId", clientSecret: "clientSecret"}
       }
 
-    }}, require("../returnBack"), require("../appInfo")]);
+    }}, require("../returnBack"), require("../appInfo"), {
+      plugin: require("posto"),
+      options: {
+        transport: function(){
+          return transport;
+        },
+        templatesOptions: {
+          directory: "test/templates"
+        },
+        from: "from@test.com"
+      }
+    }]);
     server.route({
       method: "GET",
       path: "/test",
@@ -137,6 +158,119 @@ describe("auth", function(){
       (cookie.indexOf("Max-Age=") >= 0).should.be.true;
       (cookie.indexOf("Expires=") >= 0).should.be.true;
       yield agent.get("/checkAuth").expect(200).end();
+    });
+  });
+  describe("POST /auth/signUp", function(){
+    let User, sendSpy;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+    });
+
+    beforeEach(function*(){
+      sendSpy = sinon.spy(transport, "send");
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+    });
+
+    afterEach(function(){
+      sendSpy.restore();
+    });
+
+    it("should register new user and send confirmation email", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/signUp").send({
+        userName: "user",
+        email: "user@test.com",
+        password: "111111",
+        repeatPassword: "111111"
+      }).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      user.should.be.ok;
+      user.email.should.equal("user@test.com");
+      (yield user.comparePassword("111111")).should.be.true;
+      user.confirmationToken.should.be.ok;
+      user.confirmationTokenCreatedDate.should.be.ok;
+      sendSpy.called.should.be.true;
+      let data = sendSpy.args[0][0].data;
+      data.to.should.equal("user@test.com");
+      data.from.should.equal("from@test.com");
+      data.html.should.equal("<p>user</p>");
+      context.info.should.be.ok;
+    });
+
+    it("should fail if passwords are mismatched", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/signUp").send({
+        userName: "user",
+        email: "user@test.com",
+        password: "111111",
+        repeatPassword: "121111"
+      }).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (!user).should.be.true;
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
+    });
+
+    it("should fail if user is exists (by user name)", function*(){
+      let context;
+      yield new User({
+        userName: "user",
+        email: "aaa@bbb.com"
+      }).saveQ();
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/signUp").send({
+        userName: "user",
+        email: "user@test.com",
+        password: "111111",
+        repeatPassword: "111111"
+      }).expect(200).end();
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
+    });
+
+    it("should fail if user is exists (by email)", function*(){
+      let context;
+      yield new User({
+        userName: "aaa",
+        email: "user@test.com"
+      }).saveQ();
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/signUp").send({
+        userName: "user",
+        email: "user@test.com",
+        password: "111111",
+        repeatPassword: "111111"
+      }).expect(200).end();
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
+    });
+
+    it("should fail if required param is missing", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/signUp").send({
+        email: "user@test.com",
+        password: "111111",
+        repeatPassword: "111111"
+      }).expect(200).end();
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
     });
   });
 });

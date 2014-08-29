@@ -185,8 +185,8 @@ module.exports.register = function*(plugin, options){
             }
             let user = yield request.models.user.findOne({
               "$or":[
-                {userName: request.payload.userNameOrEmail},
-                {email: request.payload.userNameOrEmail}
+                {userName: request.payload.userName},
+                {email: request.payload.email}
               ]
             }, {_id: 1}).execQ();
             if(user){
@@ -204,6 +204,7 @@ module.exports.register = function*(plugin, options){
             for(let k in request.payload.additionalFields){
               user.set(k, request.payload.additionalFields[k]);
             }
+            debugger;
             yield plugin.plugins.posto.sendEmail("confirmEmail", {
               userName: user.userName,
               confirmationToken: user.confirmationToken,

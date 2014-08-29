@@ -39,10 +39,12 @@
     "jade": "^1.4.2",
     "mocha": "^1.20.1",
     "mongoose": "^3.8.13",
+    "nodemailer-stub-transport": "^0.1.4",
     "posto": "0.0.2",
     "should": "^4.0.4",
     "sinon": "^1.10.3",
-    "supertest": "^0.13.0"
+    "supertest": "^0.13.0",
+    "then-jade": "^2.0.0"
   },
   "readme": "auth\n===========\n\nThis is hapi plugins which adds authorization support to the app. User info is stored in collection \"users\". You can use extrenal providers (via `bell`) or local authetntification if need.\n\n## Dependencies\nModule `co-hapi` and plugin `models` are required to use this plugin.\nNode 0.11+ should be used with --harmony switch.\n",
   "readmeFilename": "README.md",
