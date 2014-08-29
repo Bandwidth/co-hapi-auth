@@ -93,7 +93,7 @@ module.exports.register = function*(plugin, options){
         }
         request.setReturnUrl();
         request.auth.session.clear();
-        reply.view("signIn");
+        reply.view("signIn", {data: {}});
       },
       auth: {mode: "try", strategy: "session"},
       plugins: {
@@ -139,7 +139,7 @@ module.exports.register = function*(plugin, options){
           }
           return reply.redirect(request.getReturnUrl());
         }, function*(err, request, reply){
-          reply.view("signIn", {user: request.payload, error: err.message});
+          reply.view("signIn", {data: request.payload, error: err.message});
         },{
           payload: Joi.object().keys({
             userNameOrEmail: Joi.string().required(),
@@ -166,7 +166,7 @@ module.exports.register = function*(plugin, options){
             return reply.redirect("/");
           }
           request.setReturnUrl();
-          reply.view("signUp", {user: {}});
+          reply.view("signUp", {data: {}});
         },
         auth: {mode: "try", strategy: "session"},
         plugins: {
@@ -267,6 +267,141 @@ module.exports.register = function*(plugin, options){
       }
     }]);
   }
+  plugin.route([{
+      method: ["GET"],
+      path: "/auth/resetPasswordToken",
+      config: {
+        handler: function (request, reply) {
+          if (request.auth.isAuthenticated){
+            return reply.redirect("/");
+          }
+          reply.view("resetPasswordToken", {data: {}});
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    },{
+      method: ["POST"],
+      path: "/auth/resetPasswordToken",
+      config: {
+        handler: function* (request, reply) {
+          return yield requestHandler(request, reply, function*(request, reply){
+            if (request.auth.isAuthenticated){
+              return reply.redirect("/");
+            }
+            debugger;
+            let user = yield request.models.user.findOne({
+              email: request.payload.email,
+              externalProvider: null,
+              enabled: true
+            }).execQ();
+            if(!user) throw new Error("Missing registered user with such email");
+            user.resetPasswordToken = yield plugin.methods.random.uid();
+            user.resetPasswordTokenCreatedDate = new Date();
+            yield user.saveQ();
+            yield plugin.plugins.posto.sendEmail("resetPassword", {
+              userName: user.userName,
+              resetPasswordToken: user.resetPasswordToken,
+              appName: plugin.plugins.appInfo.info.name
+            }, {
+              to: user.email,
+              subject: plugin.plugins.appInfo.info.name + " - reset of password"
+            });
+            reply.view("resetPasswordToken", {data: {}, info: "Data to reset password have been sent you. Please check your email to continue."});
+          }, function*(err, request, reply){
+            reply.view("resetPasswordToken", {data: request.payload, error: err.message});
+          }, {
+            payload: Joi.object().keys({
+              email: Joi.string().email().required()
+            })
+          });
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    },{
+      method: ["GET"],
+      path: "/auth/resetPassword/{token}",
+      config: {
+        handler: function* (request, reply) {
+          return yield requestHandler(request, reply, function*(request, reply){
+            if (request.auth.isAuthenticated){
+              return reply.redirect("/");
+            }
+            let d = new Date(new Date() - options.resetPasswordTokenLifeTime*3600000);
+            let user = yield request.models.user.findOne({
+              resetPasswordToken: request.params.token,
+              resetPasswordTokenCreatedDate: {"$gte": d},
+              enabled: true
+            }, {_id: 1}).execQ();
+            if(!user){
+              throw new Error("Invalid token");
+            }
+            reply.view("resetPassword", {data: {token: request.params.token}});
+          }, function*(err, request, reply){
+            reply.view("error", { error: err.message});
+          }, {
+            params: Joi.object().keys({
+              token: Joi.string().required()
+            })
+          });
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    },{
+      method: ["POST"],
+      path: "/auth/resetPassword/{token}",
+      config: {
+        handler: function* (request, reply) {
+          return yield requestHandler(request, reply, function*(request, reply){
+            if (request.auth.isAuthenticated){
+              return reply.redirect("/");
+            }
+            let d = new Date(new Date() - options.resetPasswordTokenLifeTime*3600000);
+            let user = yield request.models.user.findOne({
+              resetPasswordToken: request.params.token,
+              resetPasswordTokenCreatedDate: {"$gte": d},
+              enabled: true
+            }).execQ();
+            if(!user){
+              throw new Error("Invalid token");
+            }
+            yield user.setPassword(request.payload.password);
+            yield user.saveQ();
+            reply.view("passwordChanged");
+          }, function*(err, request, reply){
+            reply.view("resetPassword", {data: {token: request.params.token}, error: err.message});
+          }, {
+            params: Joi.object().keys({
+              token: Joi.string().required()
+            }),
+            payload: Joi.object().keys({
+              password: Joi.string().min(options.minPasswordLength).required(),
+              repeatPassword: Joi.ref("password")
+            })
+          });
+        },
+        auth: {mode: "try", strategy: "session"},
+        plugins: {
+          "hapi-auth-cookie": {
+            redirectTo: false
+          }
+        }
+      }
+    }]);
 };
 
 module.exports.register.attributes = {

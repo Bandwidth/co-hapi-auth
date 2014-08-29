@@ -7,7 +7,7 @@ module.exports = function*(plugin, options){
   plugin.method("random.uid", function(length, callback){
     if(!callback) {
       callback = length;
-      length = 24;
+      length = 64;
     }
     crypto.randomBytes(length, function(err, buf){
       if(err) return callback(err);

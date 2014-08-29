@@ -321,4 +321,71 @@ describe("auth", function(){
       yield supertest(server.listener).get("/auth/confirmEmail").expect(404).end();
     });
   });
+  describe("POST /auth/resetPasswordToken", function(){
+    let User, sendSpy;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+    });
+
+    beforeEach(function*(){
+      sendSpy = sinon.spy(transport, "send");
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      yield new User({
+        userName: "user",
+        email: "user@test.com",
+        enabled: true
+      }).saveQ();
+    });
+
+    afterEach(function(){
+      sendSpy.restore();
+    });
+
+    it("should send reset password message", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/resetPasswordToken").send({email: "user@test.com"}).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (!!user.resetPasswordToken).should.be.true;
+      (!!user.resetPasswordTokenCreatedDate).should.be.true;
+      sendSpy.called.should.be.true;
+      let data = sendSpy.args[0][0].data;
+      data.from.should.equal("from@test.com");
+      data.to.should.equal("user@test.com");
+      data.html.should.equal("<p>user</p>");
+      context.info.should.be.ok;
+    });
+
+    it("should fail if user is not exists", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/resetPasswordToken").send({email: "aaa@test.com"}).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (!user.resetPasswordToken).should.be.true;
+      (!user.resetPasswordTokenCreatedDate).should.be.true;
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
+    });
+
+    it("should fail if email is absent", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/resetPasswordToken").send({test: "user@test.com"}).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (!user.resetPasswordToken).should.be.true;
+      (!user.resetPasswordTokenCreatedDate).should.be.true;
+      sendSpy.called.should.be.false;
+      context.error.should.be.ok;
+    });
+  });
 });
