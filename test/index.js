@@ -273,4 +273,52 @@ describe("auth", function(){
       context.error.should.be.ok;
     });
   });
+  describe("GET /auth/confirmEmail/{token}", function(){
+    let User;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+    });
+
+    beforeEach(function*(){
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      let user = yield new User({
+        userName: "user",
+        email: "user@test.com",
+        confirmationToken: "111",
+        confirmationTokenCreatedDate: new Date()
+      }).saveQ();
+    });
+
+    it("should check user's token and enable user's account", function*(){
+      yield supertest(server.listener).get("/auth/confirmEmail/111").expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      user.enabled.should.be.true;
+      (!user.confirmationToken).should.be.true;
+      (!user.confirmationTokenCreatedDate).should.be.true;
+      user.confirmedDate.should.ok;
+    });
+
+    it("should fail if token is invalid", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).get("/auth/confirmEmail/222").expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      user.enabled.should.be.false;
+      (!!user.confirmationToken).should.be.true;
+      (!!user.confirmationTokenCreatedDate).should.be.true;
+      (!user.confirmedDate).should.be.true;
+      context.error.should.be.ok;
+    });
+
+    it("should fail if token is missing", function*(){
+      yield supertest(server.listener).get("/auth/confirmEmail/").expect(404).end();
+      yield supertest(server.listener).get("/auth/confirmEmail").expect(404).end();
+    });
+  });
 });

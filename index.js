@@ -8,7 +8,8 @@ let optionsSchema = Joi.object({
   session: Joi.object(),
   minPasswordLength: Joi.number().integer().min(6).default(6),
   rememberTTL: Joi.number().min(0),
-  enableSignUp: Joi.boolean()
+  enableSignUp: Joi.boolean(),
+  confirmationTokenLifeTime: Joi.number().min(1).default(24*7)
 });
 
 
@@ -204,7 +205,6 @@ module.exports.register = function*(plugin, options){
             for(let k in request.payload.additionalFields){
               user.set(k, request.payload.additionalFields[k]);
             }
-            debugger;
             yield plugin.plugins.posto.sendEmail("confirmEmail", {
               userName: user.userName,
               confirmationToken: user.confirmationToken,
@@ -234,6 +234,35 @@ module.exports.register = function*(plugin, options){
           "hapi-auth-cookie": {
             redirectTo: false
           }
+        }
+      }
+    },{
+      method: ["GET"],
+      path: "/auth/confirmEmail/{token}",
+      config: {
+        handler: function* (request, reply) {
+          return yield requestHandler(request, reply, function*(request, reply){
+            let token = request.params.token;
+            let d = new Date(new Date() - options.confirmationTokenLifeTime*3600000);
+            let user = yield request.models.user.findOne({
+              confirmationToken: token,
+              confirmationTokenCreatedDate: {"$gte": d}
+            }).execQ();
+            if(!user) throw new Error("Invalid confirmation token");
+            user.confirmedDate = new Date();
+            user.confirmationTokenCreatedDate = null;
+            user.confirmationToken = null;
+            user.enabled = true;
+            yield user.saveQ();
+            request.auth.session.set({userId: user.id});
+            reply.view("emailConfirmed");
+          }, function*(err, request, reply){
+            reply.view("error", {error: err.message});
+          }, {
+            params: Joi.object().keys({
+              token: Joi.string().required()
+            })
+          });
         }
       }
     }]);
