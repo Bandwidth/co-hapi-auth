@@ -333,6 +333,7 @@ module.exports.register = function*(plugin, options){
       config: {
         handler: function* (request, reply) {
           return yield requestHandler(request, reply, function*(request, reply){
+            debugger;
             if (request.auth.isAuthenticated){
               return reply.redirect("/");
             }

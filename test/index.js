@@ -388,4 +388,114 @@ describe("auth", function(){
       context.error.should.be.ok;
     });
   });
+  describe("GET /auth/resetPassword/{token}", function(){
+    let User;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+    });
+
+    beforeEach(function*(){
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      yield new User({
+        userName: "user",
+        email: "user@test.com",
+        enabled: true,
+        resetPasswordToken: "111",
+        resetPasswordTokenCreatedDate: new Date()
+      }).saveQ();
+    });
+
+    it("should show reset password page", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).get("/auth/resetPassword/111").expect(200).end();
+      (!context.error).should.be.true;
+      context.data.token.should.equal("111");
+    });
+
+    it("should fail if token is invalid", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).get("/auth/resetPassword/121").expect(200).end();
+      (!!context.error).should.be.true;
+    });
+
+    it("should fail if token is missing", function*(){
+      yield supertest(server.listener).get("/auth/resetPassword").expect(404).end();
+      yield supertest(server.listener).get("/auth/resetPassword/").expect(404).end();
+    });
+  });
+  describe("POST /auth/resetPassword/{token}", function(){
+    let User;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+    });
+
+    beforeEach(function*(){
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      var user =  new User({
+        userName: "user",
+        email: "user@test.com",
+        enabled: true,
+        resetPasswordToken: "111",
+        resetPasswordTokenCreatedDate: new Date()
+      });
+      yield user.setPassword("111111");
+      yield user.saveQ();
+    });
+
+    it("should reset password of user", function*(){
+      yield supertest(server.listener).post("/auth/resetPassword/111").send({
+        password: "123456",
+        repeatPassword: "123456"
+      }).expect(200).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("123456")).should.be.true;
+    });
+
+    it("should fail if passwords are mismatched", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/resetPassword/111").send({
+        password: "123456",
+        repeatPassword: "111111"
+      }).expect(200).end();
+      context.error.should.be.ok;
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("123456")).should.be.false;
+    });
+
+    it("should fail if token is invalid", function*(){
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield supertest(server.listener).post("/auth/resetPassword/121").send({
+        password: "123456",
+        repeatPassword: "123456"
+      }).expect(200).end();
+      context.error.should.be.ok;
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("123456")).should.be.false;
+    });
+
+    it("should fail if token is missing", function*(){
+      yield supertest(server.listener).post("/auth/resetPassword").expect(404).end();
+      yield supertest(server.listener).post("/auth/resetPassword/").expect(404).end();
+    });
+  });
 });
