@@ -6,7 +6,7 @@ module.exports = function*(request, reply, handler, errorHandler, verifyObject){
     if(verifyObject){
       for(let k in verifyObject){
         if(verifyObject[k]){
-          request[k] = yield Joi.verify.bind(Joi, request[k] || {}, verifyObject[k]);
+          request[k] = yield Joi.validate.bind(Joi, request[k] || {}, verifyObject[k]);
         }
       }
     }

@@ -106,7 +106,7 @@ module.exports.register = function*(plugin, options){
     path: "/auth/signIn",
     config: {
       handler: function* (request, reply) {
-        return requestHandler(request, reply, function(request, reply){
+        return yield requestHandler(request, reply, function*(request, reply){
           if (request.auth.isAuthenticated){
             return reply.redirect("/");
           }
@@ -137,7 +137,7 @@ module.exports.register = function*(plugin, options){
             }
           }
           return reply.redirect(request.getReturnUrl());
-        }, function(err, request, reply){
+        }, function*(err, request, reply){
           reply.view("signIn", {user: request.payload, error: err.message});
         },{
           payload: Joi.object().keys({
@@ -148,7 +148,6 @@ module.exports.register = function*(plugin, options){
         });
       },
       auth: {mode: "try", strategy: "session"},
-      validate: ,
       plugins: {
         "hapi-auth-cookie": {
           redirectTo: false
@@ -180,7 +179,7 @@ module.exports.register = function*(plugin, options){
       path: "/auth/signUp",
       config: {
         handler: function* (request, reply) {
-          return requestHandler(request, reply, function(request, reply){
+          return yield requestHandler(request, reply, function*(request, reply){
             if (request.auth.isAuthenticated){
               return reply.redirect("/");
             }
@@ -208,14 +207,14 @@ module.exports.register = function*(plugin, options){
             yield plugin.plugins.posto.sendEmail("confirmEmail", {
               userName: user.userName,
               confirmationToken: user.confirmationToken,
-              appName: this.services.config.app.name
+              appName: plugin.plugins.appInfo.info.name
             }, {
               to: user.email,
-              subject: this.services.config.app.name + " - confirmation of email"
+              subject: plugin.plugins.appInfo.info.name + " - confirmation of email"
             });
             yield user.saveQ();
             reply.view("signUp", {data: {}, info: "Registration has been completed. Please check your email and confirm it now."});
-          }, function(err, request, reply){
+          }, function*(err, request, reply){
             reply.view("signUp", {data: request.payload, error: err.message});
           }, {
             payload: Joi.object().keys({

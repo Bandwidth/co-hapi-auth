@@ -17,7 +17,7 @@ describe("auth", function(){
         google: {clientId: "clientId", clientSecret: "clientSecret"}
       }
 
-    }}, require("../returnBack")]);
+    }}, require("../returnBack"), require("../appInfo")]);
     server.route({
       method: "GET",
       path: "/test",
@@ -48,14 +48,6 @@ describe("auth", function(){
         auth: "session"
       }
     });
-    server.route({
-      method: "GET",
-      path: "/checkCookie",
-      handler: function*(request, reply){
-        console.log(request.states);
-      }
-    });
-
     yield server.start();
     let user = yield server.methods.models.get("user");
     stub = sinon.stub(user, "getById");
@@ -129,7 +121,7 @@ describe("auth", function(){
       context.error.should.be.ok;
     });
 
-    it.only("should show signIn page with error when user name is invalid", function*(){
+    it("should show signIn page with error when user name is invalid", function*(){
       let context;
       server.once("response", function(request){
         context = request.response.source.context;
