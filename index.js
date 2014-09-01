@@ -19,7 +19,7 @@ module.exports.register = function*(plugin, options){
   options = yield Joi.validate.bind(Joi, options, optionsSchema);
   yield require("./userModels")(plugin, options);
   yield require("./random")(plugin, options);
-  yield plugin.register([require("bell"), require("hapi-auth-cookie")]);
+  yield plugin.register([require("bell"), require("hapi-auth-cookie"), require("return-back"), require("app-info")]);
 
   options.providers = options.providers || {};
   for(let name in options.providers){
