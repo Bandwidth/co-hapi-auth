@@ -400,7 +400,7 @@ describe("auth", function(){
       yield supertest(server.listener).get("/auth/confirmEmail").expect(404).end();
     });
   });
-  describe("POST /auth/resetPasswordToken", function(){
+  describe("POST /auth/resetPasswordRequest", function(){
     let User, sendSpy;
     before(function*(){
       if(stub){
@@ -429,7 +429,7 @@ describe("auth", function(){
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield supertest(server.listener).post("/auth/resetPasswordToken").send({email: "user@test.com"}).expect(200).end();
+      yield supertest(server.listener).post("/auth/resetPasswordRequest").send({email: "user@test.com"}).expect(200).end();
       let user = yield User.findOne({userName: "user"}).execQ();
       (!!user.resetPasswordToken).should.be.true;
       (!!user.resetPasswordTokenCreatedDate).should.be.true;
@@ -446,7 +446,7 @@ describe("auth", function(){
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield supertest(server.listener).post("/auth/resetPasswordToken").send({email: "aaa@test.com"}).expect(200).end();
+      yield supertest(server.listener).post("/auth/resetPasswordRequest").send({email: "aaa@test.com"}).expect(200).end();
       let user = yield User.findOne({userName: "user"}).execQ();
       (!user.resetPasswordToken).should.be.true;
       (!user.resetPasswordTokenCreatedDate).should.be.true;
@@ -459,7 +459,7 @@ describe("auth", function(){
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield supertest(server.listener).post("/auth/resetPasswordToken").send({test: "user@test.com"}).expect(200).end();
+      yield supertest(server.listener).post("/auth/resetPasswordRequest").send({test: "user@test.com"}).expect(200).end();
       let user = yield User.findOne({userName: "user"}).execQ();
       (!user.resetPasswordToken).should.be.true;
       (!user.resetPasswordTokenCreatedDate).should.be.true;

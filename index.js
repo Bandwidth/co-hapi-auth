@@ -8,8 +8,8 @@ let optionsSchema = Joi.object({
   password: Joi.string(),
   session: Joi.object(),
   minPasswordLength: Joi.number().integer().min(6).default(6),
-  rememberTTL: Joi.number().min(0),
-  enableSignUp: Joi.boolean(),
+  rememberTTL: Joi.number().min(0).default(24*30),
+  enableSignUp: Joi.boolean().default(true),
   confirmationTokenLifeTime: Joi.number().min(1).default(24*7),
   useInternalsViews: Joi.boolean().default(true)
 });
@@ -28,7 +28,7 @@ module.exports.register = function*(plugin, options){
   if(options.useInternalsViews){
     plugin.views({
       engines: {
-        "jade": require("then-jade")
+        "jade": require("jade")
       },
       path: path.join(__dirname, "views")
     });
@@ -285,13 +285,13 @@ module.exports.register = function*(plugin, options){
   }
   plugin.route([{
       method: ["GET"],
-      path: "/auth/resetPasswordToken",
+      path: "/auth/resetPasswordRequest",
       config: {
         handler: function (request, reply) {
           if (request.auth.isAuthenticated){
             return reply.redirect("/");
           }
-          reply.view("resetPasswordToken", {data: {}});
+          reply.view("resetPasswordRequest", {data: {}});
         },
         auth: {mode: "try", strategy: "session"},
         plugins: {
@@ -302,7 +302,7 @@ module.exports.register = function*(plugin, options){
       }
     },{
       method: ["POST"],
-      path: "/auth/resetPasswordToken",
+      path: "/auth/resetPasswordRequest",
       config: {
         handler: function* (request, reply) {
           return yield requestHandler(request, reply, function*(request, reply){
@@ -326,9 +326,9 @@ module.exports.register = function*(plugin, options){
               to: user.email,
               subject: plugin.plugins["app-info"].info.name + " - reset of password"
             });
-            reply.view("resetPasswordToken", {data: {}, info: "Data to reset password have been sent you. Please check your email to continue."});
+            reply.view("resetPasswordRequest", {data: {}, info: "Data to reset password have been sent you. Please check your email to continue."});
           }, function*(err, request, reply){
-            reply.view("resetPasswordToken", {data: request.payload, error: err.message});
+            reply.view("resetPasswordRequest", {data: request.payload, error: err.message});
           }, {
             payload: Joi.object().keys({
               email: Joi.string().email().required()
