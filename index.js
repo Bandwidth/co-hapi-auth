@@ -208,10 +208,10 @@ module.exports.register = function*(plugin, options){
             yield plugin.plugins.posto.sendEmail("confirmEmail", {
               userName: user.userName,
               confirmationToken: user.confirmationToken,
-              appName: plugin.plugins.appInfo.info.name
+              appName: plugin.plugins["app-info"].info.name
             }, {
               to: user.email,
-              subject: plugin.plugins.appInfo.info.name + " - confirmation of email"
+              subject: plugin.plugins["app-info"].info.name + " - confirmation of email"
             });
             yield user.saveQ();
             reply.view("signUp", {data: {}, info: "Registration has been completed. Please check your email and confirm it now."});
@@ -306,10 +306,10 @@ module.exports.register = function*(plugin, options){
             yield plugin.plugins.posto.sendEmail("resetPassword", {
               userName: user.userName,
               resetPasswordToken: user.resetPasswordToken,
-              appName: plugin.plugins.appInfo.info.name
+              appName: plugin.plugins["app-info"].info.name
             }, {
               to: user.email,
-              subject: plugin.plugins.appInfo.info.name + " - reset of password"
+              subject: plugin.plugins["app-info"].info.name + " - reset of password"
             });
             reply.view("resetPasswordToken", {data: {}, info: "Data to reset password have been sent you. Please check your email to continue."});
           }, function*(err, request, reply){
