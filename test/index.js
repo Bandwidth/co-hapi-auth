@@ -25,8 +25,8 @@ describe("auth", function(){
     yield server.pack.register([{plugin: require("co-hapi-mongoose"), options: {connectionString: "mongodb://localhost/auth_test"}}, require("co-hapi-models"), {plugin: require(".."), options: {
       providers:{
         google: {clientId: "clientId", clientSecret: "clientSecret"}
-      }
-
+      },
+      useInternalsViews: false
     }}, {
       plugin: require("posto"),
       options: {

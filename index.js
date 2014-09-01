@@ -1,6 +1,7 @@
 "use strict";
 let Joi = require("joi");
 let requestHandler = require("./requestHandler");
+let path = require("path");
 
 let optionsSchema = Joi.object({
   providers: Joi.object(),
@@ -9,7 +10,8 @@ let optionsSchema = Joi.object({
   minPasswordLength: Joi.number().integer().min(6).default(6),
   rememberTTL: Joi.number().min(0),
   enableSignUp: Joi.boolean(),
-  confirmationTokenLifeTime: Joi.number().min(1).default(24*7)
+  confirmationTokenLifeTime: Joi.number().min(1).default(24*7),
+  useInternalsViews: Joi.boolean().default(true)
 });
 
 
@@ -19,8 +21,18 @@ module.exports.register = function*(plugin, options){
   options = yield Joi.validate.bind(Joi, options, optionsSchema);
   yield require("./userModels")(plugin, options);
   yield require("./random")(plugin, options);
-  yield plugin.register([require("bell"), require("hapi-auth-cookie"), require("return-back"), require("app-info")]);
+  yield plugin.register([require("bell"), require("hapi-auth-cookie"),
+    require("return-back"), require("app-info")]);
   yield require("./locals")(plugin, options);
+
+  if(options.useInternalsViews){
+    plugin.views({
+      engines: {
+        "jade": require("then-jade")
+      },
+      path: path.join(__dirname, "views")
+    });
+  }
 
   options.providers = options.providers || {};
   for(let name in options.providers){
