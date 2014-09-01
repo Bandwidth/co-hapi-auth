@@ -14,10 +14,12 @@ module.exports = function*(plugin, options){
       response.source.context = response.source.context || {};
       response.source.context.auth = request.auth;
       response.source.context.absoluteUrl = absoluteUrl;
+      response.source.context.appInfo = plugin.plugins["app-info"].info;
     }
   });
 
-  plugin.dependency("posto", function*(plugin){
+  plugin.dependency(["posto", "app-info"], function*(plugin){
     plugin.plugins.posto.registerHelper("absoluteUrl", absoluteUrl);
+    plugin.plugins.posto.registerHelper("appInfo", plugin.plugins["app-info"].info);
   });
 };

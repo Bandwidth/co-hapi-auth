@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  form(action="/auth/signUp", method="POST", role="form").col-sm-6.col-sm-offset-3
+    legend Sign up
+    div.form-group
+      label User name
+      input(type="text", name="userName", value=(typeof data.userName == "undefined")?"": data.userName, required, autofocus).form-control
+    div.form-group
+      label Email
+      input(type="text", name="email", value=(typeof data.email == "undefined")?"": data.email, required).form-control
+    div.form-group
+      label First name
+      input(type="text", name="firstName", value=(typeof data.firstName == "undefined")?"": data.firstName).form-control
+    div.form-group
+      label Last name
+      input(type="text", name="lastName", value=(typeof data.lastName == "undefined")?"": data.lastName).form-control
+    div.form-group
+      label Password
+      input(type="password", name="password", required).form-control
+    div.form-group
+      label Repeat Password
+      input(type="password", name="repeatPassword", required).form-control
+    div.form-group
+      input(type="submit", value="Sign up").btn.btn-primary
