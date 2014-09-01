@@ -21,6 +21,7 @@ module.exports.register = function*(plugin, options){
   options = yield Joi.validate.bind(Joi, options, optionsSchema);
   yield require("./userModels")(plugin, options);
   yield require("./random")(plugin, options);
+  yield require("./seed")(plugin, options);
   yield plugin.register([require("bell"), require("hapi-auth-cookie"),
     require("return-back"), require("app-info")]);
   yield require("./locals")(plugin, options);
