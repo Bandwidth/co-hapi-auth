@@ -185,6 +185,33 @@ describe("auth", function(){
     });
   });
 
+  describe("GET /auth/signOut", function(){
+    let user;
+    before(function*(){
+      if(stub)stub.restore();
+      stub = null;
+      let User = yield server.methods.models.get("user");
+      yield User.find({userName: "user"}).remove().execQ();
+      user = new User({userName: "user", email: "user@test.com", enabled: true, confirmedDate: new Date()});
+      yield user.setPassword("123456");
+      yield user.saveQ();
+    });
+
+    after(function*(){
+      yield user.removeQ();
+    });
+
+    it("should close user session and redirect to signIn page", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      let result = yield agent.get("/auth/signOut").expect(302).end();
+      (result.headers.location.indexOf("/auth/signIn") >= 0).should.be.true;
+      let cookie = result.headers["set-cookie"][0];
+      (cookie.indexOf("Max-Age=0") >= 0).should.be.true;
+    });
+
+  });
+
   describe("GET /auth/signUp", function(){
     it("should show signup page", function*(){
       let context;

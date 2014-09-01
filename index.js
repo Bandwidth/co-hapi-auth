@@ -293,7 +293,6 @@ module.exports.register = function*(plugin, options){
             if (request.auth.isAuthenticated){
               return reply.redirect("/");
             }
-            debugger;
             let user = yield request.models.user.findOne({
               email: request.payload.email,
               externalProvider: null,
