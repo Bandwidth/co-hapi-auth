@@ -26,7 +26,7 @@ describe("auth", function(){
       providers:{
         google: {clientId: "clientId", clientSecret: "clientSecret"}
       },
-      useInternalsViews: false
+      useInternalsViews: true
     }}, {
       plugin: require("posto"),
       options: {
@@ -634,7 +634,7 @@ describe("auth", function(){
     it("should change user password", function*(){
       let agent = supertest.agent(server.listener);
       yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
-      yield agent.post("/auth/changePassword").send({password: "111111", repeatPassword: "111111"}).expect(302).end();
+      yield agent.post("/auth/changePassword").send({oldPassword: "123456", password: "111111", repeatPassword: "111111"}).expect(302).end();
       let user = yield User.findOne({userName: "user"}).execQ();
       (yield user.comparePassword("111111")).should.be.true;
     });
@@ -646,7 +646,20 @@ describe("auth", function(){
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield agent.post("/auth/changePassword").send({password: "111111", repeatPassword: "121111"}).expect(200).end();
+      yield agent.post("/auth/changePassword").send({oldPassword: "123456", password: "111111", repeatPassword: "121111"}).expect(200).end();
+      context.error.should.be.ok;
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("111111")).should.be.false;
+    });
+
+    it("should fail if old password is invalid", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield agent.post("/auth/changePassword").send({oldPassword: "000000", password: "111111", repeatPassword: "111111"}).expect(200).end();
       context.error.should.be.ok;
       let user = yield User.findOne({userName: "user"}).execQ();
       (yield user.comparePassword("111111")).should.be.false;
@@ -659,7 +672,7 @@ describe("auth", function(){
       server.once("response", function(request){
         context = request.response.source.context;
       });
-      yield agent.post("/auth/changePassword").send({password: "111111"}).expect(200).end();
+      yield agent.post("/auth/changePassword").send({oldPassword: "123456", password: "111111"}).expect(200).end();
       context.error.should.be.ok;
       let user = yield User.findOne({userName: "user"}).execQ();
       (yield user.comparePassword("111111")).should.be.false;

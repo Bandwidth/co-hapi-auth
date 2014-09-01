@@ -443,6 +443,9 @@ module.exports.register = function*(plugin, options){
             if(!user){
               throw new Error("Invalid user");
             }
+            if(!(yield user.comparePassword(request.payload.oldPassword))){
+              throw new Error("Invalid old password");
+            }
             yield user.setPassword(request.payload.password);
             yield user.saveQ();
             reply.redirect(request.getReturnUrl());
@@ -450,6 +453,7 @@ module.exports.register = function*(plugin, options){
             reply.view("changePassword", {error: err.message});
           }, {
             payload: Joi.object().keys({
+              oldPassword: Joi.string().required(),
               password: Joi.string().min(options.minPasswordLength).required(),
               repeatPassword: Joi.ref("password")
             })

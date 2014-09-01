@@ -22,14 +22,14 @@
   "license": "MIT",
   "dependencies": {
     "app-info": "0.0.1",
-    "return-back": "0.0.2",
     "bcryptjs": "^2.0",
     "bell": "^1.0",
     "co": "*",
     "hapi-auth-cookie": "^1.2",
+    "jade": "^1.6",
     "joi": "^4.6.1",
     "mongoose-timestamp": "^0.2.1",
-    "then-jade": "^2.0"
+    "return-back": "0.0.2"
   },
   "devDependencies": {
     "co": "^3.0.6",
@@ -51,5 +51,4 @@
   "readmeFilename": "README.md",
   "_id": "co-hapi-auth@0.0.1",
   "_shasum": "f3c125d8bd3d84a23a74b831a1aeab05712930ac",
-  "_from": "co-hapi-auth@*"
-}
+  "_from
