@@ -42,7 +42,7 @@
     "jade": "^1.4.2",
     "mocha": "^1.20.1",
     "mongoose": "^3.8.13",
-    "posto": "0.0.3",
+    "posto": "0.0.4",
     "should": "^4.0.4",
     "sinon": "^1.10.3",
     "supertest": "^0.13.0"
@@ -51,4 +51,5 @@
   "readmeFilename": "README.md",
   "_id": "co-hapi-auth@0.0.1",
   "_shasum": "f3c125d8bd3d84a23a74b831a1aeab05712930ac",
-  "_from
+  "_from": "co-hapi-auth@*"
+}

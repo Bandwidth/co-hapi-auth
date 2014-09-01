@@ -1,0 +1,10 @@
+p= "Welcome "
+  b= userName
+  != " to "
+  b= appName
+  != "."
+
+p Please confirm your email to complete registration by click to this url
+p
+  a(href=absoluteUrl("/auth/confirmEmail/" + confirmationToken))= absoluteUrl("/auth/confirmEmail/" + confirmationToken)
+

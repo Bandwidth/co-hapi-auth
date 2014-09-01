@@ -11,7 +11,8 @@ let optionsSchema = Joi.object({
   rememberTTL: Joi.number().min(0).default(24*30),
   enableSignUp: Joi.boolean().default(true),
   confirmationTokenLifeTime: Joi.number().min(1).default(24*7),
-  useInternalsViews: Joi.boolean().default(true)
+  useInternalViews: Joi.boolean().default(true),
+  useInternalEmailTemplates: Joi.boolean().default(true)
 });
 
 
@@ -26,7 +27,7 @@ module.exports.register = function*(plugin, options){
     require("return-back"), require("app-info")]);
   yield require("./locals")(plugin, options);
 
-  if(options.useInternalsViews){
+  if(options.useInternalViews){
     plugin.views({
       engines: {
         "jade": require("jade")
@@ -222,14 +223,18 @@ module.exports.register = function*(plugin, options){
             for(let k in request.payload.additionalFields){
               user.set(k, request.payload.additionalFields[k]);
             }
+            let opts = {
+              to: user.email,
+              subject: plugin.plugins["app-info"].info.name + " - confirmation of email"
+            };
+            if(options.useInternalEmailTemplates){
+              opts.templatesDirectory = path.join(__dirname, "templates");
+            }
             yield plugin.plugins.posto.sendEmail("confirmEmail", {
               userName: user.userName,
               confirmationToken: user.confirmationToken,
               appName: plugin.plugins["app-info"].info.name
-            }, {
-              to: user.email,
-              subject: plugin.plugins["app-info"].info.name + " - confirmation of email"
-            });
+            }, opts);
             yield user.saveQ();
             reply.view("signUp", {data: {}, info: "Registration has been completed. Please check your email and confirm it now."});
           }, function*(err, request, reply){
@@ -319,14 +324,18 @@ module.exports.register = function*(plugin, options){
             user.resetPasswordToken = yield plugin.methods.random.uid();
             user.resetPasswordTokenCreatedDate = new Date();
             yield user.saveQ();
+            let opts = {
+              to: user.email,
+              subject: plugin.plugins["app-info"].info.name + " - reset of password"
+            };
+            if(options.useInternalEmailTemplates){
+              opts.templatesDirectory = path.join(__dirname, "templates");
+            }
             yield plugin.plugins.posto.sendEmail("resetPassword", {
               userName: user.userName,
               resetPasswordToken: user.resetPasswordToken,
               appName: plugin.plugins["app-info"].info.name
-            }, {
-              to: user.email,
-              subject: plugin.plugins["app-info"].info.name + " - reset of password"
-            });
+            }, opts);
             reply.view("resetPasswordRequest", {data: {}, info: "Data to reset password have been sent you. Please check your email to continue."});
           }, function*(err, request, reply){
             reply.view("resetPasswordRequest", {data: request.payload, error: err.message});

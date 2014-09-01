@@ -25,16 +25,12 @@ describe("auth", function(){
     yield server.pack.register([{plugin: require("co-hapi-mongoose"), options: {connectionString: "mongodb://localhost/auth_test"}}, require("co-hapi-models"), {plugin: require(".."), options: {
       providers:{
         google: {clientId: "clientId", clientSecret: "clientSecret"}
-      },
-      useInternalsViews: true
+      }
     }}, {
       plugin: require("posto"),
       options: {
         transport: function(){
           return transport;
-        },
-        templatesOptions: {
-          directory: "test/templates"
         },
         from: "from@test.com"
       }
@@ -279,7 +275,7 @@ describe("auth", function(){
       let data = sendSpy.args[0][0].data;
       data.to.should.equal("user@test.com");
       data.from.should.equal("from@test.com");
-      data.html.should.equal("<p>user</p>");
+      (data.html.length > 0).should.be.true;
       context.info.should.be.ok;
     });
 
@@ -437,7 +433,7 @@ describe("auth", function(){
       let data = sendSpy.args[0][0].data;
       data.from.should.equal("from@test.com");
       data.to.should.equal("user@test.com");
-      data.html.should.equal("<p>user</p>");
+      (data.html.length > 0).should.be.true;
       context.info.should.be.ok;
     });
 

@@ -1,0 +1,7 @@
+p= "Hello "
+  b= userName
+  != "."
+
+p You requested reset of password. Please use link bellow to continue or ignore this message if you didn't it.
+p
+  a(href=absoluteUrl("/auth/resetPassword/" + resetPasswordToken))= absoluteUrl("/auth/resetPassword/" + resetPasswordToken)
