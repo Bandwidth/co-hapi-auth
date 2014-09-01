@@ -184,6 +184,9 @@ module.exports.register = function*(plugin, options){
             if (request.auth.isAuthenticated){
               return reply.redirect("/");
             }
+            if(!request.payload.repeatPassword){
+              throw new Error("repeatPassword is required");
+            }
             let user = yield request.models.user.findOne({
               "$or":[
                 {userName: request.payload.userName},
@@ -379,6 +382,9 @@ module.exports.register = function*(plugin, options){
             if(!user){
               throw new Error("Invalid token");
             }
+            if(!request.payload.repeatPassword){
+              throw new Error("repeatPassword is required");
+            }
             yield user.setPassword(request.payload.password);
             yield user.saveQ();
             reply.view("passwordChanged");
@@ -400,6 +406,43 @@ module.exports.register = function*(plugin, options){
             redirectTo: false
           }
         }
+      }
+    },{
+    method: ["GET"],
+    path: "/auth/changePassword",
+    config: {
+      handler: function (request, reply) {
+        request.setReturnUrl();
+        reply.view("changePassword");
+      },
+      auth: "session"
+    }
+  },{
+      method: ["POST"],
+      path: "/auth/changePassword",
+      config: {
+        handler: function* (request, reply) {
+          return yield requestHandler(request, reply, function*(request, reply){
+            if(!request.payload.repeatPassword){
+              throw new Error("repeatPassword is required");
+            }
+            let user = yield request.models.user.findById(request.auth.credentials.id).execQ();
+            if(!user){
+              throw new Error("Invalid user");
+            }
+            yield user.setPassword(request.payload.password);
+            yield user.saveQ();
+            reply.redirect(request.getReturnUrl());
+          }, function*(err, request, reply){
+            reply.view("changePassword", {error: err.message});
+          }, {
+            payload: Joi.object().keys({
+              password: Joi.string().min(options.minPasswordLength).required(),
+              repeatPassword: Joi.ref("password")
+            })
+          });
+        },
+        auth: "session"
       }
     }]);
 };

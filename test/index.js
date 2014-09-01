@@ -573,4 +573,98 @@ describe("auth", function(){
       yield supertest(server.listener).post("/auth/resetPassword/").expect(404).end();
     });
   });
+  describe("GET /auth/changePassword", function(){
+    let User;
+    before(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      let user = new User({
+        userName: "user",
+        email: "user@test.com",
+        enabled: true,
+        confirmedDate: new Date()
+      });
+      yield user.setPassword("123456");
+      yield user.saveQ();
+    });
+
+    it("should show change password page", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield agent.get("/auth/changePassword").expect(200).end();
+      (!context).should.be.true;
+    });
+
+    it("should redirect to signIn page on non-authorized call", function*(){
+      let result = yield supertest(server.listener).get("/auth/changePassword").expect(302).end();
+      (result.headers.location.indexOf("/auth/signIn") >= 0).should.be.true;
+    });
+  });
+  describe("POST /auth/changePassword", function(){
+    let User;
+    beforeEach(function*(){
+      if(stub){
+        stub.restore();
+      }
+      stub = null;
+      User = yield server.methods.models.get("user");
+      yield User.find({"$or": [{userName: "user"}, {email: "user@test.com"}]}).remove().execQ();
+      let user = new User({
+        userName: "user",
+        email: "user@test.com",
+        enabled: true,
+        confirmedDate: new Date()
+      });
+      yield user.setPassword("123456");
+      yield user.saveQ();
+    });
+
+    it("should change user password", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      yield agent.post("/auth/changePassword").send({password: "111111", repeatPassword: "111111"}).expect(302).end();
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("111111")).should.be.true;
+    });
+
+    it("should fail if passwords are mismatched", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield agent.post("/auth/changePassword").send({password: "111111", repeatPassword: "121111"}).expect(200).end();
+      context.error.should.be.ok;
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("111111")).should.be.false;
+    });
+
+    it("should fail if required parameter is missing", function*(){
+      let agent = supertest.agent(server.listener);
+      yield agent.post("/auth/signIn").send({userNameOrEmail: "user", password: "123456"}).expect(302).end();
+      let context;
+      server.once("response", function(request){
+        context = request.response.source.context;
+      });
+      yield agent.post("/auth/changePassword").send({password: "111111"}).expect(200).end();
+      context.error.should.be.ok;
+      let user = yield User.findOne({userName: "user"}).execQ();
+      (yield user.comparePassword("111111")).should.be.false;
+    });
+
+    it("should redirect to signIn page on non-authorized call", function*(){
+      let result = yield supertest(server.listener).post("/auth/changePassword").send({password: "111111", repeatPassword: "111111"}).expect(302).end();
+      (result.headers.location.indexOf("/auth/signIn") >= 0).should.be.true;
+    });
+  });
 });
+
