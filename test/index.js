@@ -91,11 +91,15 @@ describe("auth", function(){
     yield supertest(server.listener).get("/auth/external/google").expect(302).end();
     yield supertest(server.listener).post("/auth/external/google").expect(302).end();
   });
-  it("should create route /auth/signIn", function*(){
+  it("should provide for views auth and absoluteUrl()", function*(){
+    let context;
+    server.once("response", function(request){
+      context = request.response.source.context;
+    });
     yield supertest(server.listener).get("/auth/signIn").expect(200).end();
-  });
-  it("should create route /auth/signOut", function*(){
-    yield supertest(server.listener).get("/auth/signOut").expect(302).end();
+    context.auth.isAuthenticated.should.be.false;
+    context.absoluteUrl.should.be.a.function;
+    context.absoluteUrl("/path1").should.equal("http://localhost:3001/path1");
   });
 
   it("should load user data from session cookie's id", function*(){
@@ -600,7 +604,7 @@ describe("auth", function(){
         context = request.response.source.context;
       });
       yield agent.get("/auth/changePassword").expect(200).end();
-      (!context).should.be.true;
+      (!context.error).should.be.true;
     });
 
     it("should redirect to signIn page on non-authorized call", function*(){

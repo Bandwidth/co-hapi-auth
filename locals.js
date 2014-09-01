@@ -1,0 +1,23 @@
+"use strict";
+module.exports = function*(plugin, options){
+  let absoluteUrl = function(relativeUrl){
+    let server = plugin.servers[0];
+    if(!server || relativeUrl[0] != "/"){
+      return relativeUrl;
+    }
+    return server.info.uri + relativeUrl;
+  };
+
+  plugin.ext("onPreResponse", function* (request) {
+    let response = request.response;
+    if(response.variety == "view"){
+      response.source.context = response.source.context || {};
+      response.source.context.auth = request.auth;
+      response.source.context.absoluteUrl = absoluteUrl;
+    }
+  });
+
+  plugin.dependency("posto", function*(plugin){
+    plugin.plugins.posto.registerHelper("absoluteUrl", absoluteUrl);
+  });
+};

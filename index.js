@@ -20,6 +20,7 @@ module.exports.register = function*(plugin, options){
   yield require("./userModels")(plugin, options);
   yield require("./random")(plugin, options);
   yield plugin.register([require("bell"), require("hapi-auth-cookie"), require("return-back"), require("app-info")]);
+  yield require("./locals")(plugin, options);
 
   options.providers = options.providers || {};
   for(let name in options.providers){
@@ -335,7 +336,6 @@ module.exports.register = function*(plugin, options){
       config: {
         handler: function* (request, reply) {
           return yield requestHandler(request, reply, function*(request, reply){
-            debugger;
             if (request.auth.isAuthenticated){
               return reply.redirect("/");
             }
