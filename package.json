@@ -1,7 +1,7 @@
 {
   "name": "co-hapi-auth",
   "version": "0.0.5",
-  "description": "This is hapi plugins which adds authorization support",
+  "description": "This is hapi plugin which adds authorization support",
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test ./node_modules/.bin/mocha --harmony"

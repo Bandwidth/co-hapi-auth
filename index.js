@@ -5,12 +5,12 @@ let path = require("path");
 
 let optionsSchema = Joi.object({
   providers: Joi.object(),
-  password: Joi.string(),
   session: Joi.object(),
   minPasswordLength: Joi.number().integer().min(6).default(6),
   rememberTTL: Joi.number().min(0).default(24*30),
   enableSignUp: Joi.boolean().default(true),
   confirmationTokenLifeTime: Joi.number().min(1).default(24*7),
+  resetPasswordTokenLifeTime: Joi.number().min(1).default(24*7),
   useInternalViews: Joi.boolean().default(true),
   useInternalEmailTemplates: Joi.boolean().default(true)
 });
@@ -35,7 +35,19 @@ module.exports.register = function*(plugin, options){
       path: path.join(__dirname, "views")
     });
   }
-
+  let sessionoptions = options.session || {};
+  if(!sessionoptions.password){
+    sessionoptions.password = "dkl,_nDQ7lSXjrewp)9";
+  }
+  if(!sessionoptions.cookie){
+    sessionoptions.cookie = "sid";
+  }
+  if(!sessionoptions.redirectTo){
+    sessionoptions.redirectTo = "/auth/signIn";
+  }
+  if(!sessionoptions.isSecure){
+    sessionoptions.isSecure = false;
+  }
   options.providers = options.providers || {};
   for(let name in options.providers){
     let provider = options.providers[name];
@@ -43,7 +55,7 @@ module.exports.register = function*(plugin, options){
       provider.provider = name;
     }
     if(!provider.password){
-      provider.password = options.password || "i2mdsMsp(^s";
+      provider.password = sessionoptions.password || "i2mdsMsp(^s";
     }
     plugin.auth.strategy(name, "bell", provider);
     plugin.route({
@@ -68,17 +80,6 @@ module.exports.register = function*(plugin, options){
       }
     });
   }
-  let sessionoptions = options.session || {};
-  if(!sessionoptions.password){
-    sessionoptions.password = "dkl,_nDQ7lSXjrewp)9";
-  }
-  if(!sessionoptions.cookie){
-    sessionoptions.cookie = "sid";
-  }
-  if(!sessionoptions.redirectTo){
-    sessionoptions.redirectTo = "/auth/signIn";
-  }
-  sessionoptions.isSecure = false;
 
   plugin.auth.strategy("session", "cookie", sessionoptions);
 
@@ -239,7 +240,7 @@ module.exports.register = function*(plugin, options){
           }, {
             payload: Joi.object().keys({
               userName: Joi.string().required(),
-              email: Joi.string().required(),
+              email: Joi.string().email().required(),
               password: Joi.string().min(options.minPasswordLength).required(),
               repeatPassword: Joi.ref("password"),
               firstName: Joi.string(),
