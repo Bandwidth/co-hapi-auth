@@ -7,12 +7,19 @@ co-hapi-auth
 This is hapi plugin which adds authorization support to the app. User info is stored in collection "users". You can use extrenal providers (via `bell`) or local authetntification if need.
 
 This plugin will create next routes:
+
 `GET` and `POST /auth/external/<name>` for each external provider (see `bell` docs),
+
 `GET` and `POST /auth/signIn` for local user sign in,
+
 `GET` and `POST /auth/signUp` for registering new local user,
+
 `GET /auth/confirmEmail/<token>` for email verifycation after registering user,
+
 `GET` and `POST /auth/resetPasswordRequest` for request to reset password,
+
 `GET` and `POST /auth/resetPassword/<token>` for reseting password,
+
 `GET` and `POST /auth/changePassword` for changing password by authorized user.
 
 Each view can get access to `request.auth` via `auth`. Each view and email template can gen app module info (from app's package.json) as `appInfo` and make absolute url from relative with `absoluteUrl(<relative-url>)`.
