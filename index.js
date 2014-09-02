@@ -134,11 +134,8 @@ module.exports.register = function*(plugin, options){
             enabled: true,
             confirmedDate:{"$exists": true}
           }).execQ();
-          if(!user){
-            throw new Error("Missing user with such name or email");
-          }
-          if(!(yield user.comparePassword(request.payload.password))){
-            throw new Error("Invalid user");
+          if(!user || !(yield user.comparePassword(request.payload.password))){
+            throw new Error("Invalid user name, email or password");
           }
           request.auth.session.set({userId: user.id});
           if(request.payload.remember){
@@ -238,7 +235,7 @@ module.exports.register = function*(plugin, options){
             yield user.saveQ();
             reply.view("signUp", {data: {}, info: "Registration has been completed. Please check your email and confirm it now."});
           }, function*(err, request, reply){
-            reply.view("signUp", {data: request.payload, error: err.message});
+            reply.view("signUp", {data: request.payload, error: err.message || err});
           }, {
             payload: Joi.object().keys({
               userName: Joi.string().required(),
@@ -408,6 +405,8 @@ module.exports.register = function*(plugin, options){
               throw new Error("repeatPassword is required");
             }
             yield user.setPassword(request.payload.password);
+            user.resetPasswordToken = null;
+            user.resetPasswordTokenCreatedDate = null;
             yield user.saveQ();
             reply.view("passwordChanged");
           }, function*(err, request, reply){

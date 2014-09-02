@@ -26,7 +26,7 @@
     "bell": "^1.0",
     "co": "*",
     "hapi-auth-cookie": "^1.2",
-    "jade": "^1.6",
+    "jade": "^1.6.0",
     "joi": "^4.6.1",
     "mongoose-timestamp": "^0.2.1",
     "return-back": "0.0.2"
@@ -39,13 +39,13 @@
     "co-mocha": "0.0.4",
     "co-supertest": "0.0.7",
     "hapi": "^6.2.0",
-    "jade": "^1.4.2",
     "mocha": "^1.20.1",
     "mongoose": "^3.8.13",
     "posto": "0.0.4",
     "should": "^4.0.4",
     "sinon": "^1.10.3",
-    "supertest": "^0.13.0"
+    "supertest": "^0.13.0",
+    "then-jade": "^2.0"
   },
   "readme": "auth\n===========\n\nThis is hapi plugins which adds authorization support to the app. User info is stored in collection \"users\". You can use extrenal providers (via `bell`) or local authetntification if need.\n\n## Dependencies\nModule `co-hapi` and plugin `models` are required to use this plugin.\nNode 0.11+ should be used with --harmony switch.\n",
   "readmeFilename": "README.md",
