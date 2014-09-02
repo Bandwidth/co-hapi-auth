@@ -15,7 +15,11 @@ module.exports = function*(plugin, options){
         confirmedDate: new Date(),
         firstName: "Administrator"
       });
-      yield admin.setPassword("111111");
+      let password = "";
+      for(let i = 0; i < options.minPasswordLength; i++){
+        password += "1";
+      }
+      yield admin.setPassword(password);
       admin.roles.push(role.id);
       yield admin.saveQ();
     }
