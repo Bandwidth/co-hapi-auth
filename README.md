@@ -51,4 +51,4 @@ Node 0.11+ should be used with --harmony switch.
  * `confirmationTokenLifeTime` is time when generated confirmation token is valid (default 1 week),
  * `resetPasswordTokenLifeTime` is same for reset password token (default 1 week),
  * `useInternalViews` allows to use internal (inside this module) views for auth requests or not (default true). If its value is false you should implement own views files as changePassword, emailConfirmed, error, passwordChanged, resetPassword, resetPasswordRequest, signIn and signUp.
-* `useInternalEmailTemplates` allows to use internal (inside this module) email templates for auth requests or not (default true). If its value is false you should implement own email templates as confirmEmail and resetPassword.
+ * `useInternalEmailTemplates` allows to use internal (inside this module) email templates for auth requests or not (default true). If its value is false you should implement own email templates as confirmEmail and resetPassword.
