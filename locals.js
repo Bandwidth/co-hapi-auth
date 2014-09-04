@@ -5,7 +5,7 @@ module.exports = function*(plugin, options){
     if(!server || relativeUrl[0] != "/"){
       return relativeUrl;
     }
-    return server.info.uri + relativeUrl;
+    return (server.settings.location || server.info.uri) + relativeUrl;
   };
 
   plugin.ext("onPreResponse", function* (request) {
