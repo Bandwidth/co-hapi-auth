@@ -12,7 +12,8 @@ let optionsSchema = Joi.object({
   confirmationTokenLifeTime: Joi.number().min(1).default(24*7),
   resetPasswordTokenLifeTime: Joi.number().min(1).default(24*7),
   useInternalViews: Joi.boolean().default(true),
-  useInternalEmailTemplates: Joi.boolean().default(true)
+  useInternalEmailTemplates: Joi.boolean().default(true),
+  pepper: Joi.string()
 });
 
 
@@ -20,6 +21,9 @@ let optionsSchema = Joi.object({
 module.exports.register = function*(plugin, options){
   options = options || {};
   options = yield Joi.validate.bind(Joi, options, optionsSchema);
+  if(!options.pepper){
+    options.pepper = "lso0f2jUnx%d";
+  }
   yield require("./userModels")(plugin, options);
   yield require("./random")(plugin, options);
   yield require("./seed")(plugin, options);
