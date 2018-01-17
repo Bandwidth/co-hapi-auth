@@ -1,3 +1,5 @@
+⚠️ DEPRECATED⚠️ 
+
 co-hapi-auth
 ===========
 
